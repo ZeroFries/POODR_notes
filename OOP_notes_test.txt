@@ -1,0 +1,87 @@
+Single Responsabilities and Avoiding Dependencies:
+Give classes of objects a single responsability, all methods a single responsability, etc
+remove
+Remove dependencies on sending messages to other classes by making the messages general purpose ones
+can optionally send method arguements in a hash, which removes the order and requirement all arguements be specified
+	-or, keep some arguements static and in order, with an additional options hash
+	-create arg defaults with || (if not a boolean arg), or the safer fetch method
+		-ex: def initialize( args)   ->           @ chainring = args.fetch(: chainring, 40)
+		-if arg defaults are especially complicated, use a seperate method and the merge function, which operates in a similar manner to fetch
+Depend on things which are less likely to change than you are
+	-the more abstract and general, yet single purpose the methods, the less likely you are to chnage
+		-ex: multplication isnt likely to change and so can be used as a dependent
+
+Private vs Public interfaces:
+public interface consist of the methods in a class which can be invoked by other classes
+	-they deal with the primary responsability of the class
+	-keep them well documented in the tests, 
+private consist of the methods in the class which are used to implement the public methods
+	-ie some math for a calculation within the class which wont be used by other classes
+-try not to chain methods together in a train if the methods belong to multiple objects/classes
+	-ex: customer.bike.wheel.rotate
+	-calling for a stable attribute in this manner usually ok, behavior less ok
+
+DuckTyping:
+-make it so that objects from different classes can respond to the same messages, albeit with varied behavior
+	-this prevents dependencies on the sender knowing what type the object its sending the msg to is
+
+Inheritance:
+-subclasses inherite all behavior/attributes of super class, further specializing
+-abstract classes serve as the base shared attributes/behavior, but are rarely instantiated as new objects
+	-ex: bicycle is an abstract class, road bike/mountain bike are concrete
+	-behavior is automatically delegated up the chain if the method is missing from the subclass
+	-can be manually delegated via the 'super (args to be passed up)' method
+-define subclass specific argument defaults with wrapper methods placed in the class
+	-ex: @tire_size  = args[:tire_size] || default_tire_size  <- in super class
+		-def default_tire_size   # <- subclass default
+	-when usign a template w/ subclass specific defaults, make sure to include raise NotImplementedError
+	so that other programmers know what you mean
+
+Modules (role sharing):
+-can be used the same way as inheritance, including overwriting behavior for specific instances
+	-used to abstract behavior where inheritance isnt appropriate
+-dont really get hook methods
+
+Composition:
+-break an object down into its component parts, these component parts are now seperate objects with their own class
+-problem: often you will end up with array-like objects which dont have all the array behavior/methods attached
+-solution: include Enumerable to get common search methods and such, and delegate methods to the actual array object 
+ with Forwardable module and def_delegate,see pg. 174 for more
+-composition is a better choice for many problems than inh, especially where an object is strictly composed of component parts which
+ DNE outside of the containing object
+	-if inheritance is to be used there must be a justifying reason
+
+Conclusion of above: take the pros and cons of DuckTyping/Modules, Inheritance, and Composition into consideration when
+trying to decide which is the ideal to use
+-inheritance is best for well defined, strict heirarchies
+-composition best for when whole > sum of parts (has-a relationship)
+-use ducktyping when many different kinds of objects play a similar role (behaves-like-a relationship)
+	-design the interface of the ducktype (what can it do? what messages will it send and respond do)
+	-compact the behavior into a shared module
+
+Tests:
+-want tests which do not need to be altered with rafactoring code
+	-ie: as long as the outside behavior doesnt change, internal structure shouldnt affect the tests
+	-benefit: makes refacotring much easier since you can be sure external behavior remains unaltered very easily
+-want to test public interface, not private innerworkings of objects
+-(1) use tests that assert what a message to an object will return (called states)
+-queries (outgoing messages which just return an attribute and dont affect the rest of app) need not be tested
+-(2) commands (outgoing messages which have an impact on behavior of app) need to be tested
+	-test the number of times sent and with what arguments
+(1) - States:
+-decide whether testing a concrete case or abstract case of a role is best
+-can use doubles (fake versions of classes) to test abstractions
+	-be careful of the real versions changing and the fake one not reflecting the change
+		-use concretion when the abstraction only has a few specific cases
+testing roles:
+-tests should demonstrate the role, prove that each player behaves correctly, and prove their public interface is stable
+-use a module to write an abstract test which fits all players, then individually implement the test on each player (pg 223)
+(2) - Mocks:
+-do not test whether a command is correclty implemented by checking the return results, this is the job of receiver's public interface tests in (1)
+	-instead, you want to make sure the command is being sent when it should be
+-use mocks (tests of behavior)
+	-create a fake object who should recieve the command (no need to actually construct the method like doubles, just want to test if the
+	command was sent)
+	-see pg 217 for an example
+
+*testing git revision
